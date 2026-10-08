@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ESCAPE ALARM – Dubbelbalanserad Magnetkontakt</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+:root{
+  --bg:#0b1015;--panel:#141c23;--panel2:#1b2630;--line:#34424e;
+  --text:#edf3f6;--muted:#9eabb3;--green:#42d392;--red:#ff5c5c;
+  --yellow:#ffd166;--blue:#61b5ff;--orange:#ff9f43;
+  --bright-cyan:#00d2ff;
+}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(circle at top,#1a2731 0,#0b1015 48%);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh}
+.app{max-width:1150px;margin:auto;padding:22px}
+header{display:flex;justify-content:space-between;gap:16px;align-items:center;border-bottom:1px solid var(--line);padding-bottom:16px}
+h1{font-family:'IBM Plex Mono',monospace;font-size:clamp(22px,4vw,36px);margin:0;letter-spacing:1px}
+h2{margin-top:0;font-family:'IBM Plex Mono',monospace}
+.subtitle{color:var(--muted);margin-top:6px}
+.statusbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.badge{padding:9px 12px;border:1px solid var(--line);background:var(--panel);border-radius:99px;font-weight:bold;font-family:'IBM Plex Mono',monospace}
+main{margin-top:22px}
+.level{display:none}
+.level.active{display:block}
+.card{background:rgba(20,28,35,.96);border:1px solid var(--line);border-radius:14px;padding:20px;margin-bottom:16px}
+.grid{display:grid;grid-template-columns:1.1fr .9fr;gap:16px}
+@media(max-width:850px){.grid{grid-template-columns:1fr}.app{padding:12px}}
+.story{font-size:17px;line-height:1.55}
+.instruction{border-left:4px solid var(--blue);padding:12px 15px;background:#111b22;margin:14px 0}
+button,select,input{font:inherit}
+button{background:#223442;color:var(--text);border:1px solid #466071;border-radius:99px;padding:11px 15px;cursor:pointer}
+button:hover{background:#2c4555}
+button.primary{background:#256b52;border-color:#4aa77f}
+button.secondary{background:#1a2732;border-color:#3a4d5c;color:var(--muted)}
+button.secondary:hover{background:#233443;color:var(--text)}
+button:disabled{opacity:.45;cursor:not-allowed}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.nav-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.nav-btns{display:flex;gap:8px}
+.feedback{min-height:26px;margin-top:12px;font-weight:bold}
+.ok{color:var(--green)}.bad{color:var(--red)}
+.progress{height:9px;background:#0b1015;border-radius:99px;overflow:hidden;border:1px solid var(--line);margin:12px 0 20px}
+.progress>div{height:100%;background:var(--green);width:0;transition:width .35s}
+
+.circuit{background:#0d1c26;border:1px solid var(--line);border-radius:12px;padding:16px;overflow:hidden}
+svg{width:100%;height:auto;display:block}
+
+.sch-text-orange{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;fill:var(--orange);text-anchor:middle;letter-spacing:.08em}
+.sch-text-panel{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;fill:#edf3f6;text-anchor:middle}
+.wire-off{stroke:#2c4354;stroke-width:2.5;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.wire-bypass{stroke:#ff5c5c;stroke-width:3.5;fill:none;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:6,6;filter:drop-shadow(0 0 6px #ff5c5c);animation:pulseBypass 1.2s infinite ease-in-out}
+@keyframes pulseBypass{0%,100%{stroke:#ff5c5c}50%{stroke:#ffd166}}
+
+.node-dot{fill:var(--bright-cyan);filter:drop-shadow(0 0 5px rgba(0,210,255,0.8))}
+.sw-terminal-dot{fill:#ffffff;stroke:var(--bright-cyan);stroke-width:2}
+.sw-line{stroke:var(--bright-cyan);stroke-width:3;stroke-linecap:round}
+.signal-path{fill:none;stroke:#7dffb0;stroke-width:3.5;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:8,8;animation:flow 0.8s linear infinite;filter:drop-shadow(0 0 6px #7dffb0)}
+.signal-broken{fill:none;stroke:#ff6b4a;stroke-width:3.5;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:8,8;animation:flow 0.8s linear infinite;filter:drop-shadow(0 0 6px #ff6b4a)}
+@keyframes flow{100%{stroke-dashoffset:-16}}
+.term-num{font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:700;fill:#1a2b36;text-anchor:middle}
+.resistor-lead{stroke:#718290;stroke-width:2.5;fill:none;stroke-linecap:square}
+
+.multimeter{background:#0d141a;border:1px solid #586a75;border-radius:12px;padding:16px;max-width:390px}
+.display{background:#09100d;color:#75ff9b;font-family:'IBM Plex Mono',monospace;font-size:28px;padding:12px;text-align:right;border-radius:6px;margin-bottom:12px;border:2px solid #27372c}
+.calc-box{background:#131f28;border:1px solid #334654;border-radius:8px;padding:12px;margin-top:10px;font-family:'IBM Plex Mono',monospace;font-size:13px;color:#aaccdd;line-height:1.5}
+.calc-box strong{color:#00d2ff}
+select,input{width:100%;background:#0b1116;color:var(--text);border:1px solid var(--line);padding:10px;border-radius:8px}
+.option{display:block;width:100%;text-align:left;margin:8px 0}
+button.option.selected{border-color:var(--bright-cyan);background:#1a3244}
+.code{font-family:'IBM Plex Mono',monospace;font-size:25px}
+table{border-collapse:collapse;width:100%;margin-top:12px}
+td,th{border:1px solid var(--line);padding:9px;text-align:left}
+th{background:#1c2932}
+.hidden{display:none}
+.answer-lock{margin-top:14px;padding:14px;border:1px solid var(--yellow);background:#2a2415;border-radius:10px}
+.answer-lock strong{color:var(--yellow)}
+.info-box{margin-top:14px;padding:16px;border:1px solid var(--blue);background:#10202c;border-radius:10px;line-height:1.5}
+.info-box h3{margin-top:0;color:var(--blue)}
+.final{border-color:#397a5d;background:#10251c}
+.quiz-group{background:#101820;border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:16px}
+.quiz-group h4{margin-top:0;color:var(--bright-cyan);font-family:'IBM Plex Mono',monospace;font-size:16px}
+footer{color:var(--muted);text-align:center;padding:20px}
+</style>
+
+<style id="level2-fullwidth-layout">
+/* Nivå 2: kopplingsbild över hela kortets bredd, frågor under */
+#level2 .grid {
+  display: block !important;
+}
+
+#level2 .circuit {
+  width: 100% !important;
+  box-sizing: border-box;
+  margin: 0 0 20px 0;
+  padding: 16px;
+}
+
+#level2 .circuit svg {
+  display: block;
+  width: 100% !important;
+  height: auto !important;
+  max-width: none !important;
+}
+
+#level2 .grid > div:last-child {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+#level2 .grid > div:last-child h3 {
+  margin-top: 0;
+}
+</style>
+
+
+<style id="student-code-style">
+.student-start,
+.mission-complete {
+  max-width: 760px;
+  margin: 30px auto;
+}
+
+.student-start-inner,
+.mission-complete-inner {
+  text-align: center;
+  padding: 24px;
+}
+
+.student-start label {
+  display: block;
+  text-align: left;
+  max-width: 420px;
+  margin: 18px auto 7px;
+  font-weight: 700;
+}
+
+#studentName {
+  display: block;
+  width: 100%;
+  max-width: 420px;
+  box-sizing: border-box;
+  margin: 0 auto 14px;
+  padding: 13px 15px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: #0d1c26;
+  color: #fff;
+  font-size: 17px;
+}
+
+#studentName:focus {
+  outline: 2px solid #00d2ff;
+}
+
+.completion-name {
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.student-code {
+  display: inline-block;
+  margin: 16px auto;
+  padding: 18px 28px;
+  border: 2px dashed #42d392;
+  border-radius: 12px;
+  background: #0d1c26;
+  color: #42d392;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: 4px;
+}
+
+.code-instruction {
+  font-weight: 700;
+}
+
+.completion-score {
+  margin-top: 15px;
+  opacity: .85;
+}
+
+.hidden {
+  display: none !important;
+}
+</style>
+
+</head>
+<body>
+<div class="app" id="app">
+<header>
+  <div>
+    <h1>ESCAPE ALARM</h1>
+    <div class="subtitle">Dubbelbalansering</div>
+  </div>
+  <div class="statusbar">
+    <div class="badge">Nivå <span id="levelNo">1</span>/6</div>
+    <div class="badge">Poäng <span id="score">0</span></div>
+  </div>
+</header>
+
+<main>
+<div class="progress"><div id="progress"></div></div>
+
+<!-- NIVÅ 1 -->
+
+<div id="studentStart" class="card student-start">
+  <div class="student-start-inner">
+    <div class="eyebrow">ESCAPE ALARM</div>
+    <h1>🔐 Starta uppdraget</h1>
+    <p>Skriv ditt namn innan du börjar. När du har klarat hela uppdraget får du en individuell kod som du lämnar till läraren.</p>
+
+    <label for="studentName">Ditt namn</label>
+    <input id="studentName" type="text" maxlength="40"
+           placeholder="Skriv ditt namn..." autocomplete="off">
+
+    <button id="startMission" class="primary">Starta uppdraget →</button>
+    <div id="nameError" class="feedback bad hidden"></div>
+  </div>
+</div>
+
+<section class="level active" id="level1">
+<div class="card story">
+<div class="nav-header">
+  <h2>🚨 Larmet har gått</h2>
+  <div class="nav-btns">
+    <button class="secondary next-btn hidden">Framåt →</button>
+  </div>
+</div>
+<p>Klockan är 02:17. Ett inbrottslarm på en mindre industrifastighet har löst ut. Du är teknikern som skickats dit.</p>
+<p>Larmcentralen visar <strong>LARM / SABOTAGE PÅ SEKTION 1 (MAGNETKONTAKT DÖRR)</strong>, men ingen vet om det beror på en öppnad dörr, ett kabelbrott eller ett saboterat kapslingslock.</p>
+<div class="instruction"><strong>Uppdrag:</strong> Förstå grundidén bakom en dubbelbalanserad larmslinga kopplad till en magnetkontakt (Plint 1–4). Du måste kunna skilja mellan normal drift, dörrlarm och sabotage.</div>
+<h3>Vilken information kan larmcentralen få genom att mäta slingans resistans?</h3>
+<button class="option" data-answer="1">A. Olika resistansvärden representerar olika tillstånd (Normaldrift, Larm, Sabotage)</button>
+<button class="option" data-answer="0">B. Bara om kabeln är helt ansluten eller avbruten</button>
+<button class="option" data-answer="0">C. Resistans har ingen betydelse i ett balanserat larmsystem</button>
+<div class="feedback" id="fb1"></div>
+</div>
+</section>
+
+<!-- NIVÅ 2 -->
+
+<section class="level" id="level2">
+<div class="card">
+<div class="nav-header">
+  <h2>⚡ Nivå 2 – Strömvägen vid normal drift</h2>
+  <div class="nav-btns">
+    <button class="secondary prev-btn">← Tillbaka</button>
+    <button class="secondary next-btn hidden">Framåt →</button>
+  </div>
+</div>
+<p class="story">Du öppnar locket till centralapparaten. Schemat visar ZON 1 (Z1 / COM) ansluten till magnetkontakten med två <strong>5,6 kΩ</strong> motstånd (R1 parallellt över larmkontakten och R2 i serie).</p>
+<div class="grid">
+<div class="circuit">
+<svg viewBox="0 0 620 480" xmlns="http://www.w3.org/2000/svg" width="100%" height="auto" style="display:block;width:100%;height:auto;">
+  <defs>
+    <linearGradient id="casingGradLight2" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="60%" stop-color="#e6ecef"/>
+      <stop offset="100%" stop-color="#d1dadf"/>
+    </linearGradient>
+    <linearGradient id="earGradLight2" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#eaeef1"/>
+      <stop offset="100%" stop-color="#c2cbd0"/>
+    </linearGradient>
+    <linearGradient id="blockGradLight2" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#f8fafb"/>
+      <stop offset="100%" stop-color="#d5dee3"/>
+    </linearGradient>
+    <linearGradient id="screwGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="50%" stop-color="#b0bcc5"/>
+      <stop offset="100%" stop-color="#677784"/>
+    </linearGradient>
+    <filter id="boxShadow2" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="5" stdDeviation="4" flood-color="#000" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <!-- KAPSLING MAGNETKONTAKT -->
+  <g filter="url(#boxShadow2)">
+    <path d="M 45,145 L 90,145 L 90,215 L 45,215 Q 40,215 40,210 L 40,150 Q 40,145 45,145 Z" fill="url(#earGradLight2)" stroke="#8fa0ad" stroke-width="1.5"/>
+    <circle cx="65" cy="180" r="7" fill="#202d38" stroke="#718290" stroke-width="1.5"/>
+
+    <path d="M 530,145 L 575,145 Q 580,145 580,150 L 580,210 Q 580,215 575,215 L 530,215 Z" fill="url(#earGradLight2)" stroke="#8fa0ad" stroke-width="1.5"/>
+    <circle cx="555" cy="180" r="7" fill="#202d38" stroke="#718290" stroke-width="1.5"/>
+
+    <rect x="85" y="125" width="450" height="110" rx="8" fill="url(#casingGradLight2)" stroke="#9bb0c1" stroke-width="2"/>
+    <rect x="105" y="140" width="410" height="80" rx="6" fill="#bcccd6" stroke="#93a5b3" stroke-width="1.5"/>
+
+    <!-- Plintblock 1-2 & 3-4 -->
+    <rect x="125" y="148" width="110" height="64" rx="5" fill="url(#blockGradLight2)" stroke="#8fa1af" stroke-width="1.5"/>
+    <line x1="180" y1="148" x2="180" y2="212" stroke="#a4b4c2" stroke-width="1.5"/>
+
+    <rect x="385" y="148" width="110" height="64" rx="5" fill="url(#blockGradLight2)" stroke="#8fa1af" stroke-width="1.5"/>
+    <line x1="440" y1="148" x2="440" y2="212" stroke="#a4b4c2" stroke-width="1.5"/>
+  </g>
+
+  <!-- Övre kretsvägar -->
+  <text class="sch-text-orange" x="190" y="25">LARM</text>
+  <text class="sch-text-orange" x="385" y="25">SAB</text>
+
+  <path class="wire-off" d="M 225,50 L 340,50"/>
+  <path class="wire-off" d="M 155,145 L 155,50 L 175,50"/>
+  <path class="wire-off" d="M 205,145 L 205,80 L 280,80 L 280,50"/>
+  <path class="wire-off" d="M 415,145 L 415,50 L 390,50"/>
+
+  <circle class="node-dot" cx="280" cy="50" r="4.5"/>
+  <circle class="sw-terminal-dot" cx="175" cy="50" r="3"/>
+  <circle class="sw-terminal-dot" cx="225" cy="50" r="3"/>
+  <circle class="sw-terminal-dot" cx="340" cy="50" r="3"/>
+  <circle class="sw-terminal-dot" cx="390" cy="50" r="3"/>
+
+  <!-- Slutna kontakter vid normal drift -->
+  <line class="sw-line" x1="175" y1="50" x2="225" y2="50"/>
+  <line class="sw-line" x1="340" y1="50" x2="390" y2="50"/>
+
+  <!-- Plintnumrering -->
+  <text class="term-num" x="155" y="165">1</text>
+  <text class="term-num" x="205" y="165">2</text>
+  <text class="term-num" x="415" y="165">3</text>
+  <text class="term-num" x="465" y="165">4</text>
+
+  <!-- Motstånd 1 (Plint 1-2) -->
+  <g>
+    <path class="resistor-lead" d="M 155,188 L 155,240 L 170,240 M 190,240 L 205,240 L 205,188"/>
+    <g transform="translate(165,230)"><rect x="0" y="0" width="30" height="20" rx="3" fill="#e2c08f" stroke="#ffffff" stroke-width="2"/>
+      <rect x="5" y="0" width="3" height="20" fill="#2e7d32"/>
+      <rect x="11" y="0" width="3" height="20" fill="#1565c0"/>
+      <rect x="17" y="0" width="3" height="20" fill="#c62828"/>
+      <rect x="23" y="0" width="3" height="20" fill="#ffd700"/>
+      
+    
+      <text x="15" y="34" font-family="'IBM Plex Mono',monospace" font-size="14" fill="#ffffff" text-anchor="middle" font-weight="800">R1</text></g>
+  </g>
+
+  <!-- Motstånd 2 (Plint 3-4) -->
+  <g>
+    <path class="resistor-lead" d="M 415,188 L 415,240 L 430,240 M 450,240 L 465,240 L 465,188"/>
+    <g transform="translate(425,230)"><rect x="0" y="0" width="30" height="20" rx="3" fill="#e2c08f" stroke="#ffffff" stroke-width="2"/>
+      <rect x="5" y="0" width="3" height="20" fill="#2e7d32"/>
+      <rect x="11" y="0" width="3" height="20" fill="#1565c0"/>
+      <rect x="17" y="0" width="3" height="20" fill="#c62828"/>
+      <rect x="23" y="0" width="3" height="20" fill="#ffd700"/>
+      
+    
+      <text x="15" y="34" font-family="'IBM Plex Mono',monospace" font-size="14" fill="#ffffff" text-anchor="middle" font-weight="800">R2</text></g>
+  </g>
+
+  <!-- Skruvar -->
+  <g transform="translate(155,188)"><circle cx="0" cy="0" r="10" fill="url(#screwGrad2)" stroke="#455461" stroke-width="1.5"/><line x1="-5" y1="-5" x2="5" y2="5" stroke="#25323d" stroke-width="2"/><line x1="-5" y1="5" x2="5" y2="-5" stroke="#25323d" stroke-width="2"/></g>
+  <g transform="translate(205,188)"><circle cx="0" cy="0" r="10" fill="url(#screwGrad2)" stroke="#455461" stroke-width="1.5"/><line x1="-5" y1="-5" x2="5" y2="5" stroke="#25323d" stroke-width="2"/><line x1="-5" y1="5" x2="5" y2="-5" stroke="#25323d" stroke-width="2"/></g>
+  <g transform="translate(415,188)"><circle cx="0" cy="0" r="10" fill="url(#screwGrad2)" stroke="#455461" stroke-width="1.5"/><line x1="-5" y1="-5" x2="5" y2="5" stroke="#25323d" stroke-width="2"/><line x1="-5" y1="5" x2="5" y2="-5" stroke="#25323d" stroke-width="2"/></g>
+  <g transform="translate(465,188)"><circle cx="0" cy="0" r="10" fill="url(#screwGrad2)" stroke="#455461" stroke-width="1.5"/><line x1="-5" y1="-5" x2="5" y2="5" stroke="#25323d" stroke-width="2"/><line x1="-5" y1="5" x2="5" y2="-5" stroke="#25323d" stroke-width="2"/></g>
+
+  <!-- KABELSTRÄCKA NER TILL CENTRAL -->
+  <path class="wire-off" d="M 155,188 L 155,420 H 260 L 260,442"/>
+  <path class="wire-off" d="M 465,188 L 465,420 H 360 L 360,442"/>
+
+  <!-- STRÖMVÄG VID NORMAL DRIFT -->
+  <path class="signal-path" d="M 260,442 L 260,420 H 155 L 155,50 L 225,50 L 340,50 L 390,50 L 415,50 L 415,188 L 415,240 L 430,240 M 450,240 L 465,240 L 465,188 L 465,420 H 360 L 360,442"/>
+
+  <!-- CENTRALAPPARAT / PLINTAR (Z1 OCH COM) -->
+  <g filter="url(#boxShadow2)">
+    <rect x="220" y="415" width="180" height="55" rx="6" fill="#141f28" stroke="#384a58" stroke-width="1.5"/>
+    <rect x="230" y="420" width="160" height="45" rx="4" fill="#1b2834" stroke="#2c3e4d" stroke-width="1"/>
+    
+    <circle cx="260" cy="442" r="6" fill="#00d2ff" stroke="#ffffff" stroke-width="1.5"/>
+    <text class="sch-text-panel" x="260" y="410">Z1</text>
+    
+    <circle cx="360" cy="442" r="6" fill="#00d2ff" stroke="#ffffff" stroke-width="1.5"/>
+    <text class="sch-text-panel" x="360" y="410">COM</text>
+
+    <text x="310" y="458" font-family="'IBM Plex Mono',monospace" font-size="9" fill="#42d392" font-weight="700" text-anchor="middle">DSC NEO (NORMALDRIFT: 5,6 kΩ)</text>
+  </g>
+</svg>
+</div>
+
+<div>
+<h3>Varför mäter larmcentralen exakt 5,6 kΩ vid normal drift när dörren är stängd?</h3>
+<button class="option" data-answer2="1">När larmkontakten är sluten överbyggs R1, så strömmen passerar endast genom R2 (5,6 kΩ)</button>
+<button class="option" data-answer2="0">Båda motstånden kopplas bort helt när dörren stängs</button>
+<button class="option" data-answer2="0">Larmcentralen halverar automatiskt det uppmätta värdet</button>
+<div class="feedback" id="fb2"></div>
+</div>
+</div>
+</div>
+</section>
+
+<!-- NIVÅ 3 -->
+<section class="level" id="level3">
+<div class="card">
+<div class="nav-header">
+  <h2>🧩 Nivå 3 – Vad betyder värdena?</h2>
+  <div class="nav-btns">
+    <button class="secondary prev-btn">← Tillbaka</button>
+    <button class="secondary next-btn hidden">Framåt →</button>
+  </div>
+</div>
+<p class="story">Nu ska du tolka mätningarna på den dubbelbalanserade magnetkontakten (Plint Z1 – COM):</p>
+<table>
+<tr><th>Tillstånd</th><th>Resistans (Mätning Z1 – COM)</th></tr>
+<tr><td>Normal drift (Dörr stängd, Lock på)</td><td>5,6 kΩ</td></tr>
+<tr><td>Dörr larm (Reed-kontakt öppen)</td><td>11,2 kΩ (5,6 kΩ + 5,6 kΩ)</td></tr>
+<tr><td>Kortslutning / Sabotageförsök</td><td>≈ 0 Ω</td></tr>
+<tr><td>Sabotage / Kabelbrott (Lock av / Avbrott)</td><td>∞ / OL</td></tr>
+</table>
+<div class="instruction"><strong>Observera:</strong> Vid dörrlarm tvingas strömmen genom parallellmotståndet R1 (5,6 kΩ) utöver seriemotståndet R2 (5,6 kΩ), vilket ger totalt 11,2 kΩ.</div>
+<h3>Du mäter 11,2 kΩ på slingan. Vad är tolkningen?</h3>
+<button class="option" data-answer3="0">Allt är i normaldrift</button>
+<button class="option" data-answer3="1">Dörren har öppnats (Larm utlöst)</button>
+<button class="option" data-answer3="0">Någon har plockat av locket på magnetkontakten</button>
+<div class="feedback" id="fb3"></div>
+</div>
+</section>
+
+<!-- NIVÅ 4 -->
+<section class="level" id="level4">
+<div class="card">
+<div class="nav-header">
+  <h2>🔎 Nivå 4 – Felsök anläggningen</h2>
+  <div class="nav-btns">
+    <button class="secondary prev-btn">← Tillbaka</button>
+    <button class="secondary next-btn hidden">Framåt →</button>
+  </div>
+</div>
+<p class="story">Mätning över Z1 och COM visar <strong>∞ / OL</strong>. Tre observationer har gjorts:</p>
+<div class="grid">
+<div class="card" style="margin:0">
+<h3>Rapport från platsen</h3>
+<ul>
+<li>Magneten sitter kvar nära reed-kontakten på dörrkarmen.</li>
+<li>Skyddslocket på magnetkontakten verkar sitta lite snett efter en stöt.</li>
+<li>Kabeln till larmcentralen är hel.</li>
+</ul>
+</div>
+<div class="card" style="margin:0">
+<h3>Vad är den troligaste orsaken till avbrottet (OL)?</h3>
+<button class="option" data-answer4="0">Magneten är för stark</button>
+<button class="option" data-answer4="1">Sabotagekontakten (SAB) har löst ut p.g.a. att locket rubbats</button>
+<button class="option" data-answer4="0">Detektorn står i normaldrift</button>
+<div class="feedback" id="fb4"></div>
+</div>
+</div>
+</div>
+</section>
+
+<!-- NIVÅ 5 -->
+<section class="level" id="level5">
+<div class="card">
+<div class="nav-header">
+  <h2>🕵️ Nivå 5 – Sabotageförsöket</h2>
+  <div class="nav-btns">
+    <button class="secondary prev-btn">← Tillbaka</button>
+    <button class="secondary next-btn hidden">Framåt →</button>
+  </div>
+</div>
+<p class="story">Du upptäcker att någon försökt bygla över magnetkontakten med en kortslutningskabel för att kunna öppna dörren osedd.</p>
+<div class="circuit">
+<svg viewBox="0 0 620 480" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="casingGradLight5" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="60%" stop-color="#e6ecef"/>
+      <stop offset="100%" stop-color="#d1dadf"/>
+    </linearGradient>
+    <linearGradient id="earGradLight5" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#eaeef1"/>
+      <stop offset="100%" stop-color="#c2cbd0"/>
+    </linearGradient>
+    <linearGradient id="blockGradLight5" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#f8fafb"/>
+      <stop offset="100%" stop-color="#d5dee3"/>
+    </linearGradient>
+    <linearGradient id="screwGrad5" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="50%" stop-color="#b0bcc5"/>
+      <stop offset="100%" stop-color="#677784"/>
+    </linearGradient>
+    <filter id="boxShadow5" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="5" stdDeviation="4" flood-color="#000" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <!-- KAPSLING MAGNETKONTAKT -->
+  <g filter="url(#boxShadow5)">
+    <path d="M 45,145 L 90,145 L 90,215 L 45,215 Q 40,215 40,210 L 40,150 Q 40,145 45,145 Z" fill="url(#earGradLight5)" stroke="#8fa0ad" stroke-width="1.5"/>
+    <circle cx="65" cy="180" r="7" fill="#202d38" stroke="#718290" stroke-width="1.5"/>
+
+    <path d="M 530,145 L 575,145 Q 580,145 580,150 L 580,210 Q 580,215 575,215 L 530,215 Z" fill="url(#earGradLight5)" stroke="#8fa0ad" stroke-width="1.5"/>
+    <circle cx="555" cy="180" r="7" fill="#202d38" stroke="#718290" stroke-width="1.5"/>
+
+    <rect x="85" y="125" width="450" height="110" rx="8" fill="url(#casingGradLight5)" stroke="#9bb0c1" stroke-width="2"/>
+    <rect x="105" y="140" width="410" height="80" rx="6" fill="#bcccd6" stroke="#93a5b3" stroke-width="1.5"/>
+
+    <!-- Plintblock 1-2 & 3-4 -->
+    <rect x="125" y="148" width="110" height="64" rx="5" fill="url(#blockGradLight5)" stroke="#8fa1af" stroke-width="1.5"/>
+    <line x1="180" y1="148" x2="180" y2="212" stroke="#a4b4c2" stroke-width="1.5"/>
+
+    <rect x="385" y="148" width="110" height="64" rx="5" fill="url(#blockGradLight5)" stroke="#8fa1af" stroke-width="1.5"/>
+    <line x1="440" y1="148" x2="440" y2="212" stroke="#a4b4c2" stroke-width="1.5"/>
+  </g>
+
+  <!-- Övre kretsvägar -->
+  <text class="sch-text-orange" x="190" y="25">LARM</text>
+  <text class="sch-text-orange" x="385" y="25">SAB</text>
+
+  <path class="wire-off" d="M 225,50 L 340,50"/>
+  <path class="wire-off" d="M 155,145 L 155,50 L 175,50"/>
+  <path class="wire-off" d="M 205,145 L 205,80 L 280,80 L 280,50"/>
+  <path class="wire-off" d="M 415,145 L 415,50 L 390,50"/>
+
+  <circle class="node-dot" cx="280" cy="50" r="4.5"/>
+  <circle class="sw-terminal-dot" cx="175" cy="50" r="3"/>
+  <circle class="sw-terminal-dot" cx="225" cy="50" r="3"/>
+  <circle class="sw-terminal-dot" cx="340" cy="50" r="3"/>
+  <circle class="sw-terminal-dot" cx="390" cy="50" r="3"/>
+
+  <line class="sw-line" x1="175" y1="50" x2="225" y2="50"/>
+  <line class="sw-line" x1="340" y1="50" x2="390" y2="50"/>
+
+  <!-- Plintnumrering -->
+  <text class="term-num" x="155" y="165">1</text>
+  <text class="term-num" x="205" y="165">2</text>
+  <text class="term-num" x="415" y="165">3</text>
+  <text class="term-num" x="465" y="165">4</text>
+
+  <!-- Motstånd 1 (Plint 1-2) -->
+  <g>
+    <path class="resistor-lead" d="M 155,188 L 155,240 L 170,240 M 190,240 L 205,240 L 205,188"/>
+    <g transform="translate(165,230)"><rect x="0" y="0" width="30" height="20" rx="3" fill="#e2c08f" stroke="#ffffff" stroke-width="2"/>
+      <rect x="5" y="0" width="3" height="20" fill="#2e7d32"/>
+      <rect x="11" y="0" width="3" height="20" fill="#1565c0"/>
+      <rect x="17" y="0" width="3" height="20" fill="#c62828"/>
+      <rect x="23" y="0" width="3" height="20" fill="#ffd700"/>
+      
+    
+      <text x="15" y="34" font-family="'IBM Plex Mono',monospace" font-size="14" fill="#ffffff" text-anchor="middle" font-weight="800">R1</text></g>
+  </g>
+
+  <!-- Motstånd 2 (Plint 3-4) -->
+  <g>
+    <path class="resistor-lead" d="M 415,188 L 415,240 L 430,240 M 450,240 L 465,240 L 465,188"/>
+    <g transform="translate(425,230)"><rect x="0" y="0" width="30" height="20" rx="3" fill="#e2c08f" stroke="#ffffff" stroke-width="2"/>
+      <rect x="5" y="0" width="3" height="20" fill="#2e7d32"/>
+      <rect x="11" y="0" width="3" height="20" fill="#1565c0"/>
+      <rect x="17" y="0" width="3" height="20" fill="#c62828"/>
+      <rect x="23" y="0" width="3" height="20" fill="#ffd700"/>
+      
+    
+      <text x="15" y="34" font-family="'IBM Plex Mono',monospace" font-size="14" fill="#ffffff" text-anchor="middle" font-weight="800">R2</text></g>
+  </g>
+
+  <!-- Skruvar -->
+  <g transform="translate(155,188)"><circle cx="0" cy="0" r="10" fill="url(#screwGrad5)" stroke="#455461" stroke-width="1.5"/><line x1="-5" y1="-5" x2="5" y2="5" stroke="#25323d" stroke-width="2"/><line x1="-5" y1="5" x2="5" y2="-5" stroke="#25323d" stroke-width="2"/></g>
+  <g transform="translate(205,188)"><circle cx="0" cy="0" r="10" fill="url(#screwGrad5)" stroke="#455461" stroke-width="1.5"/><line x1="-5" y1="-5" x2="5" y2="5" stroke="#25323d" stroke-width="2"/><line x1="-5" y1="5" x2="5" y2="-5" stroke="#25323d" stroke-width="2"/></g>
+  <g transform="translate(415,188)"><circle cx="0" cy="0" r="10" fill="url(#screwGrad5)" stroke="#455461" stroke-width="1.5"/><line x1="-5" y1="-5" x2="5" y2="5" stroke="#25323d" stroke-width="2"/><line x1="-5" y1="5" x2="5" y2="-5" stroke="#25323d" stroke-width="2"/></g>
+  <g transform="translate(465,188)"><circle cx="0" cy="0" r="10" fill="url(#screwGrad5)" stroke="#455461" stroke-width="1.5"/><line x1="-5" y1="-5" x2="5" y2="5" stroke="#25323d" stroke-width="2"/><line x1="-5" y1="5" x2="5" y2="-5" stroke="#25323d" stroke-width="2"/></g>
+
+  <!-- KABELSTRÄCKA NER TILL CENTRAL -->
+  <path class="wire-off" d="M 155,188 L 155,420 H 260 L 260,442"/>
+  <path class="wire-off" d="M 465,188 L 465,420 H 360 L 360,442"/>
+
+  <!-- SABOTAGE / BYGLING PÅ KABELN -->
+  <path class="wire-bypass" d="M 155,300 L 465,300"/>
+  <circle cx="155" cy="300" r="5" fill="#ff5c5c"/>
+  <circle cx="465" cy="300" r="5" fill="#ff5c5c"/>
+
+  <!-- STRÖMVÄG VID KORTSLUTNING/BYGLING -->
+  <path class="signal-broken" d="M 260,442 L 260,420 H 155 L 155,300 L 465,300 L 465,420 H 360 L 360,442"/>
+
+  <g transform="translate(310, 290)">
+    <rect x="-110" y="-22" width="220" height="28" rx="6" fill="#1a0c0c" stroke="#ff5c5c" stroke-width="1.5"/>
+    <text x="0" y="-3" font-family="'IBM Plex Mono',monospace" font-size="11" fill="#ff5c5c" font-weight="700" text-anchor="middle">⚡ SABOTAGEBYGLING (0 Ω)</text>
+  </g>
+
+  <!-- CENTRALAPPARAT / PLINTAR (Z1 OCH COM) -->
+  <g filter="url(#boxShadow5)">
+    <rect x="220" y="415" width="180" height="55" rx="6" fill="#141f28" stroke="#384a58" stroke-width="1.5"/>
+    <rect x="230" y="420" width="160" height="45" rx="4" fill="#1b2834" stroke="#2c3e4d" stroke-width="1"/>
+    
+    <circle cx="260" cy="442" r="6" fill="#00d2ff" stroke="#ffffff" stroke-width="1.5"/>
+    <text class="sch-text-panel" x="260" y="410">Z1</text>
+    
+    <circle cx="360" cy="442" r="6" fill="#00d2ff" stroke="#ffffff" stroke-width="1.5"/>
+    <text class="sch-text-panel" x="360" y="410">COM</text>
+
+    <text x="310" y="458" font-family="'IBM Plex Mono',monospace" font-size="9" fill="#ff5c5c" font-weight="700" text-anchor="middle">DSC NEO (ZON 1 - SABOTAGE)</text>
+  </g>
+</svg>
+</div>
+<h3>Varför upptäcker larmcentralen byglingsförsöket direkt när slingans motstånd blir 0 Ω?</h3>
+<button class="option" data-answer5="0">Centralen förväntar sig 0 Ω i normaldrift</button>
+<button class="option" data-answer5="1">Normaldrift kräver 5,6 kΩ. Ett värde på 0 Ω tolkas som kortslutning/sabotage</button>
+<button class="option" data-answer5="0">Kortslutning gör att larmcentralen stängs av</button>
+<div class="feedback" id="fb5"></div>
+</div>
+</section>
+
+<!-- NIVÅ 6 -->
+<section class="level" id="level6">
+<div class="card">
+<div class="nav-header">
+  <h2>🔐 Nivå 6 – Slutquiz: Lås upp larmcentralen</h2>
+  <div class="nav-btns">
+    <button class="secondary prev-btn">← Tillbaka</button>
+  </div>
+</div>
+<p class="story">Svara på de tre frågorna nedan för att verifiera dina kunskaper om den dubbelbalanserade magnetkontakten och låsa upp larmcentralen!</p>
+
+<div class="quiz-group">
+  <h4>Fråga 1</h4>
+  <p>Vad är resistansen (i kΩ) i slingan vid normaldrift (dörr stängd, lock på)?</p>
+  <button class="option q6" data-q="1" data-val="2">A. 2.2 kΩ</button>
+  <button class="option q6" data-q="1" data-val="5">B. 5.6 kΩ</button>
+  <button class="option q6" data-q="1" data-val="11">C. 11.2 kΩ</button>
+</div>
+
+<div class="quiz-group">
+  <h4>Fråga 2</h4>
+  <p>Hur många olika tillstånd kan larmcentralen identifiera i en dubbelbalanserad slingkoppling? (Larm, sabotage och så vidare)</p>
+  <button class="option q6" data-q="2" data-val="2">A. 2 tillstånd</button>
+  <button class="option q6" data-q="2" data-val="3">B. 4 tillstånd</button>
+  <button class="option q6" data-q="2" data-val="4">C. 3 tillstånd</button>
+</div>
+
+<div class="quiz-group">
+  <h4>Fråga 3</h4>
+  <p>Hur många balanseringsmotstånd (R1 och R2) används i den dubbelbalanserade magnetkontakten?</p>
+  <button class="option q6" data-q="3" data-val="1">A. 2 motstånd</button>
+  <button class="option q6" data-q="3" data-val="2">B. 1 motstånd</button>
+  <button class="option q6" data-q="3" data-val="4">C. 4 motstånd</button>
+</div>
+
+<div class="actions">
+<button class="primary" id="unlockBtn">Lås upp</button>
+</div>
+<div class="feedback" id="fb6"></div>
+
+<div id="success" class="hidden final card">
+<h2>🎉 LARMET ÄR SÄKRAT</h2>
+<p>Du har framgångsrikt felsökt magnetkontakten och löst escaperoomet!</p>
+<p><strong>Du har visat att du kan:</strong></p>
+<ul>
+<li>förklara dubbelbalansering på en magnetkontakt kopplad från DSC Neo Z1/COM</li>
+<li>skilja mellan Normaldrift (5,6 kΩ), Dörrlarm (11,2 kΩ), Sabotage/Avbrott (OL) och Kortslutning (0 Ω)</li>
+<li>följa signalgången över reed-kontakt och sabotagekontakt</li>
+<li>identifiera sabotageförsök med bygling</li>
+</ul>
+</div>
+</div>
+</section>
+
+<div id="globalLock" class="answer-lock hidden" aria-live="polite">
+  <strong>⏱ Nästa svar är låst.</strong>
+  <span id="lockText">Vänta 0:30 innan du får svara igen.</span>
+</div>
+
+<div id="answerInfo" class="info-box hidden" aria-live="polite">
+  <h3>📘 Information – rätt svar</h3>
+  <div id="answerInfoText"></div>
+</div>
+
+<footer>
+Pedagogisk simulering – DSC Neo magnetkontakt med dubbelbalanserad slinga (5,6 kΩ).
+</footer>
+</main>
+</div>
+
+
+<div id="missionComplete" class="card mission-complete hidden">
+  <div class="mission-complete-inner">
+    <div class="eyebrow">UPPDRAG SLUTFÖRT</div>
+    <h1>🔓 Alarmet är avklarat!</h1>
+
+    <p id="completionName" class="completion-name"></p>
+
+    <p>Du har klarat hela Escape Alarm.</p>
+    <p>Din individuella kod är:</p>
+
+    <div id="studentCode" class="student-code">----</div>
+
+    <p class="code-instruction">Ge koden till läraren.</p>
+    <div id="completionScore" class="completion-score"></div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const root = document.getElementById("app");
+  let level = 1, maxUnlockedLevel = 1, score = 0;
+  window.escapeAlarmScore = 0;
+  const total = 6;
+  const solved = new Set();
+  let lockedUntil = 0;
+  let timer = null;
+
+  // För valda svar i Nivå 6 quiz
+  const q6Answers = { 1: null, 2: null, 3: null };
+
+  const levels = Array.from({length: total}, (_,i) => document.getElementById("level"+(i+1)));
+  const levelNo = document.getElementById("levelNo");
+  const scoreEl = document.getElementById("score");
+  const progress = document.getElementById("progress");
+  const globalLock = document.getElementById("globalLock");
+  const lockText = document.getElementById("lockText");
+  const answerInfo = document.getElementById("answerInfo");
+  const answerInfoText = document.getElementById("answerInfoText");
+
+  const explanations = {
+    1: {
+      correct:"A. Olika resistansvärden representerar olika tillstånd.",
+      text:"I ett balanserat larmsystem mäts slingans resistans kontinuerligt. Genom att använda motstånd kan larmcentralen skilja mellan normaldrift, dörrlarm, sabotage/avbrott och kortslutning."
+    },
+    2: {
+      correct:"När larmkontakten är sluten överbyggs R1, så strömmen passerar endast genom R2 (5,6 kΩ).",
+      text:"När dörren är stängd är larmkontakten sluten (0 Ω). Strömmen väljer den lättaste vägen förbi R1 och går direkt vidare till seriemotståndet R2 (5,6 kΩ)."
+    },
+    3: {
+      correct:"Dörren har öppnats (Larm utlöst).",
+      text:"När dörren öppnas bryts reed-kontakten. Strömmen tvingas då gå igenom parallellmotståndet R1 (5,6 kΩ) samt seriemotståndet R2 (5,6 kΩ), vilket ger totalt 11,2 kΩ."
+    },
+    4: {
+      correct:"Sabotagekontakten (SAB) har löst ut p.g.a. att locket rubbats.",
+      text:"När locket sitter snett fjädrar sabotagebrytaren ut och bryter kretsen helt, vilket ger avbrott (OL / ∞)."
+    },
+    5: {
+      correct:"Normaldrift kräver 5,6 kΩ. Ett värde på 0 Ω tolkas som kortslutning/sabotage.",
+      text:"När någon byglas förbi motstånden faller motståndet till 0 Ω. Eftersom larmcentralen förväntar sig 5,6 kΩ larmar den direkt för kortslutningssabotage."
+    },
+    6: {
+      correct:"Fråga 1: 5 kΩ (B), Fråga 2: 4 tillstånd (C), Fråga 3: 2 motstånd (B).",
+      text:"Normaldrift mäts till 5,6 kΩ. Larmcentralen mäter tre olika tillstånd (Normal, Larm, Sabotage). Den dubbelbalanserade kopplingen har två motstånd."
+    }
+  };
+
+  function update(){
+    levels.forEach((el,i)=>el.classList.toggle("active", i===level-1));
+    levelNo.textContent = level;
+    scoreEl.textContent = score;
+
+    document.querySelectorAll(".next-btn").forEach(btn => {
+      if(level < maxUnlockedLevel) {
+        btn.classList.remove("hidden");
+      } else {
+        btn.classList.add("hidden");
+      }
+    });
+
+    const isLocked = (Date.now() < lockedUntil) && (level === maxUnlockedLevel);
+    document.querySelectorAll(".option, #unlockBtn").forEach(b => {
+      b.disabled = isLocked;
+    });
+
+    if(isLocked) {
+      globalLock.classList.remove("hidden");
+    } else {
+      globalLock.classList.add("hidden");
+    }
+
+    progress.style.width = maxUnlockedLevel===total ? "100%" : ((maxUnlockedLevel-1)/(total-1))*100 + "%";
+    window.scrollTo({top:0,behavior:"smooth"});
+  }
+
+  document.querySelectorAll(".prev-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      if(level > 1) {
+        answerInfo.classList.add("hidden");
+        level--;
+        update();
+      }
+    });
+  });
+
+  document.querySelectorAll(".next-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      if(level < maxUnlockedLevel) {
+        answerInfo.classList.add("hidden");
+        level++;
+        update();
+      }
+    });
+  });
+
+  function showInfo(n){
+    answerInfoText.innerHTML =
+      "<strong>Rätt svar:</strong> " + explanations[n].correct +
+      "<br><br>" + explanations[n].text;
+    answerInfo.classList.remove("hidden");
+  }
+
+  function lockAnswers(){
+    lockedUntil = Date.now() + 30000;
+    globalLock.classList.remove("hidden");
+    document.querySelectorAll(".option, #unlockBtn").forEach(b=>b.disabled=true);
+    updateTimer();
+    clearInterval(timer);
+    timer=setInterval(updateTimer,1000);
+  }
+
+  function updateTimer(){
+    const remaining=Math.max(0,lockedUntil-Date.now());
+    const sec=Math.ceil(remaining/1000);
+    if(sec<=0){
+      clearInterval(timer);
+      globalLock.classList.add("hidden");
+      document.querySelectorAll(".option, #unlockBtn").forEach(b=>b.disabled=false);
+      return;
+    }
+    const m=Math.floor(sec/60), s=sec%60;
+    lockText.textContent=` Vänta ${m}:${String(s).padStart(2,"0")} innan du får svara igen.`;
+  }
+
+  function attempt(n, isCorrect, feedback, next){
+    showInfo(n);
+
+    if(isCorrect){
+      if(!solved.has("fb"+n)){score+=10; window.escapeAlarmScore=score; solved.add("fb"+n)}
+      feedback.textContent="✓ Rätt svar! Klicka på Framåt när du är redo.";
+      feedback.className="feedback ok";
+      if(next > maxUnlockedLevel) maxUnlockedLevel = next;
+      const nextBtn = document.querySelector(`#level${level} .next-btn`);
+      if(nextBtn) nextBtn.classList.remove("hidden");
+      update();
+      if(level === 6) {
+        showMissionComplete();
+      }
+    }else{
+      score -= 5;
+      window.escapeAlarmScore = score;
+      scoreEl.textContent = score;
+      feedback.textContent="✕ Fel svar. −5 poäng. Rätt svar och förklaring visas ovan. Du måste vänta 30 sekunder innan du kan försöka igen.";
+      feedback.className="feedback bad";
+      lockAnswers();
+    }
+  }
+
+  root.querySelectorAll("[data-answer]").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      if(Date.now()<lockedUntil && level === maxUnlockedLevel) return;
+      attempt(1,btn.dataset.answer==="1",document.getElementById("fb1"),2);
+    });
+  });
+
+  root.querySelectorAll("[data-answer2]").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      if(Date.now()<lockedUntil && level === maxUnlockedLevel) return;
+      attempt(2,btn.dataset.answer2==="1",document.getElementById("fb2"),3);
+    });
+  });
+  root.querySelectorAll("[data-answer3]").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      if(Date.now()<lockedUntil && level === maxUnlockedLevel) return;
+      attempt(3,btn.dataset.answer3==="1",document.getElementById("fb3"),4);
+    });
+  });
+  root.querySelectorAll("[data-answer4]").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      if(Date.now()<lockedUntil && level === maxUnlockedLevel) return;
+      attempt(4,btn.dataset.answer4==="1",document.getElementById("fb4"),5);
+    });
+  });
+  root.querySelectorAll("[data-answer5]").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      if(Date.now()<lockedUntil && level === maxUnlockedLevel) return;
+      attempt(5,btn.dataset.answer5==="1",document.getElementById("fb5"),6);
+    });
+  });
+
+  // Hantering av val för Nivå 6 quiz
+  document.querySelectorAll(".q6").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const qNum = btn.dataset.q;
+      const val = btn.dataset.val;
+      q6Answers[qNum] = val;
+
+      // Markera valt alternativ visuellt
+      document.querySelectorAll(`.q6[data-q="${qNum}"]`).forEach(b => b.classList.remove("selected"));
+      btn.classList.add("selected");
+    });
+  });
+
+  document.getElementById("unlockBtn").addEventListener("click",()=>{
+    if(Date.now()<lockedUntil && level === maxUnlockedLevel) return;
+    const fb=document.getElementById("fb6");
+
+    if(!q6Answers[1] || !q6Answers[2] || !q6Answers[3]){
+      fb.textContent="⚠️ Du måste besvara alla 3 frågor i quizet innan du kan låsa upp.";
+      fb.className="feedback bad";
+      return;
+    }
+
+    const correct = (q6Answers[1] === "5" && q6Answers[2] === "4" && q6Answers[3] === "2");
+    showInfo(6);
+
+    if(correct){
+      if(!solved.has("fb6")){score+=10; window.escapeAlarmScore=score; solved.add("fb6")}
+      fb.textContent="✓ Alla svar rätt! Escaperoomet är löst och larmcentralen är upplåst.";
+      fb.className="feedback ok";
+      document.getElementById("success").classList.remove("hidden");
+      scoreEl.textContent=score;
+      progress.style.width="100%";
+      showMissionComplete();
+    }else{
+      fb.textContent="✕ Något svar var felaktigt. Se rätta svar och förklaring ovan. Du måste vänta 30 sekunder innan du får försöka igen.";
+      fb.className="feedback bad";
+      lockAnswers();
+    }
+  });
+
+  update();
+})();
+</script>
+
+<script id="student-code-system">
+(function () {
+  const startScreen = document.getElementById("studentStart");
+  const nameInput = document.getElementById("studentName");
+  const startButton = document.getElementById("startMission");
+  const nameError = document.getElementById("nameError");
+
+  const completeScreen = document.getElementById("missionComplete");
+  const completionName = document.getElementById("completionName");
+  const studentCode = document.getElementById("studentCode");
+  const completionScore = document.getElementById("completionScore");
+
+  let studentName = "";
+
+  /*
+   * Enkel individuell kod.
+   * Den är avsiktligt inte tänkt som säker kryptering – den fungerar
+   * som elevens "kvitto" till läraren.
+   */
+  function makeStudentCode(name, finalScore) {
+    // Enkel hex-kodning. Inte kryptering – bara ett robust elevkvitto.
+    const payload = JSON.stringify({
+      n: name.trim(),
+      s: finalScore,
+      v: 1
+    });
+
+    const bytes = new TextEncoder().encode(payload);
+    let hex = Array.from(bytes, b => b.toString(16).padStart(2, "0")).join("");
+
+    return "AL-" + hex.match(/.{1,8}/g).join("-");
+  }
+
+  startButton.addEventListener("click", function () {
+    const name = nameInput.value.trim();
+
+    if (!name) {
+      nameError.textContent = "Skriv ditt namn innan du startar.";
+      nameError.classList.remove("hidden");
+      nameInput.focus();
+      return;
+    }
+
+    studentName = name;
+    nameError.classList.add("hidden");
+    startScreen.classList.add("hidden");
+
+    const firstLevel = document.getElementById("level1");
+    if (firstLevel) {
+      firstLevel.classList.remove("hidden");
+      firstLevel.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+      });
+    }
+  });
+
+  nameInput.addEventListener("keydown", function (event) {
+    if (event.key === "Enter") {
+      startButton.click();
+    }
+  });
+
+  /*
+   * Den här funktionen anropas ENDAST efter korrekt svar på nivå 6.
+   * Namnet i början räcker alltså inte för att få någon kod.
+   */
+  window.showMissionComplete = function () {
+    const finalScore = Number(window.escapeAlarmScore || 0);
+
+    completionName.textContent = studentName || "Elev";
+    studentCode.textContent = makeStudentCode(
+      studentName || "Elev",
+      finalScore
+    );
+    completionScore.textContent = "Resultat: " + finalScore + " poäng";
+
+    document.querySelectorAll(".level").forEach(function (el) {
+      el.classList.add("hidden");
+    });
+
+    completeScreen.classList.remove("hidden");
+    completeScreen.scrollIntoView({
+      behavior: "smooth",
+      block: "start"
+    });
+  };
+})();
+</script>
+
+</body>
+</html>
